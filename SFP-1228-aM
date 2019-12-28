@@ -1,0 +1,108 @@
+(function()
+{
+	if( !location.href.startsWith( 'https://store.steampowered.com/account/licenses' ) )
+	{
+		alert( 'Please run this on Steam\'s account licenses page.' );
+
+		window.location = 'https://store.steampowered.com/account/licenses/';
+
+		return;
+	}
+
+	let freePackages = new Set( [
+		21367, //  Peggle Extreme
+		231371, //  Zen of Sudoku
+		21289, //  Bloodline Champions
+		13261, //  RACE 07: Andy Priaulx Crowne Plaza Raceway
+		47267, //  Champions Online
+		108638, //  Sherlock Holmes: The Mystery of The Mummy
+		21290, //  Dragon Nest
+		21291, //  America's Army 3
+		21293, //  Tribes: Ascend
+		190805, //  Zombie Panic! Source
+		53724, //  Pirates, Vikings, & Knights II
+		50343, //  Dystopia
+		163344, //  Eschalon: Book 1
+		21370, //  Retro/Grade IGF Demo
+		21371, //  Between IGF Demo
+		21372, //  Mightier
+		21373, //  Coil
+		115550, //  BRAINPIPE: A Plunge to Unhumanity
+		101618, //  Perfect World International 
+		21295, //  Rusty Hearts
+		21375, //  Moonbase Alpha
+		62217, //  RIFT
+		415626, //  Hammerfight
+		50431, //  Altitude
+		21297, //  Stronghold Kingdoms
+		20977, //  LIMBO Demo
+		48959, //  Saira
+		20989, //  Air Forte Demo 
+		21299, //  HOMEFRONT Demo
+		21380, //  Saints Row: The Third - Initiation Station
+		49768, //  ProtoGalaxy
+		21003, //  Might and Magic: Clash of Heroes - Demo
+		316063, //  Winter Voices
+		20000, //  The Binding of Isaac Trailer
+		20014, //  Wasteland Angel Trailer 2
+		20020, //  Nuclear Dawn Commander Tutorial
+		20028, //  Fallout: New Vegas - Lonesome Road DLC
+		20032, //  Bunch of Heroes test
+		20033, //  Rusty Hearts Launch Trailer
+		20034, //  ROBT
+		20038, //  Stronghold3 Gameplay
+		20043, //  F1 2011 Dev Diary 3 PEGI
+		20044, //  F1 2011 Dev Diary 3 ESRB
+	] );
+
+	[ ...document.querySelectorAll( 'a[href^="javascript:RemoveFreeLicense"]' ) ].forEach( ( element ) =>
+	{
+		const match = element.href.match( /javascript:RemoveFreeLicense\( ([0-9]+), '/ );
+		
+		if( match !== null )
+		{
+			freePackages.delete( +match[ 1 ] );
+		}
+	} );
+
+	let loaded = 0;
+	let modal = window.ShowBlockingWaitDialog(
+		'Executing…',
+		'Please wait until all requests finish. Ignore all the errors, let it finish.'
+	);
+
+	const fetched = ( res ) =>
+	{
+		modal.Dismiss();
+
+		if( ++loaded >= freePackages.length )
+		{
+			modal = window.ShowBlockingWaitDialog(
+				'Reloading…',
+				'Keep in mind only 50 packages can be activated per hour.'
+			);
+
+			location.reload();
+		}
+		else
+		{
+			modal = window.ShowBlockingWaitDialog(
+				'Executing…',
+				`Loaded <b>${loaded}</b>/${freePackages.length}.`
+			);
+		}
+	};
+
+	freePackages = [ ...freePackages ].slice( -50 );
+
+	for( const subid of freePackages )
+	{
+		window.jQuery.post(
+			'https://store.steampowered.com/checkout/addfreelicense/' + subid,
+			{
+				ajax: true,
+				sessionid: window.g_sessionID,
+			}
+		).always( fetched );
+	}
+}());
